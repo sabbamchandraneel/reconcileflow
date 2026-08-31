@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String           @id @default(uuid())
+  email           String           @unique
+  name            String?
+  passwordHash    String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  reconciliations Reconciliation[]
+
+  @@map("users")
+}
+
+model Reconciliation {
+  id                    String        @id @default(uuid())
+  userId                String
+  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title                 String        @default("Audit Run")
+  status                String        @default("completed")
+  
+  totalOrdersCount      Int
+  totalPaymentsCount    Int
+  totalOrderValue       Float
+  totalGrossOrderValue  Float         @default(0.0)
+  totalDiscountValue    Float         @default(0.0)
+  totalPaymentValue     Float
+  totalSettledCharges   Float         @default(0.0)
+  totalSettledRefunds   Float         @default(0.0)
+  totalNetSettled       Float         @default(0.0)
+  totalFeesPaid         Float         @default(0.0)
+  cleanMatchedCount     Int           @default(0)
+  cleanMatchedValue     Float         @default(0.0)
+  matchRatePercentage   Float
+  discrepancyCount      Int
+  totalValueInDispute   Float
+  totalMoneyAtRisk      Float
+  
+  summaryJson           String?       // JSON serialized summary metadata & category breakdown
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  orders                Order[]
+  payments              Payment[]
+  discrepancies         Discrepancy[]
+
+  @@index([userId])
+  @@map("reconciliations")
+}
+
+model Order {
+  id                String         @id @default(uuid())
+  reconciliationId  String
+  reconciliation    Reconciliation @relation(fields: [reconciliationId], references: [id], onDelete: Cascade)
+  orderIdRaw        String
+  orderIdNormalized String
+  customerEmail     String
+  currency          String
+  grossAmount       Float
+  discount          Float
+  netAmount         Float
+  status            String
+  orderDate         String
+
+  @@index([reconciliationId])
+  @@index([orderIdNormalized])
+  @@map("orders")
+}
+
+model Payment {
+  id                 String         @id @default(uuid())
+  reconciliationId   String
+  reconciliation     Reconciliation @relation(fields: [reconciliationId], references: [id], onDelete: Cascade)
+  transactionRef     String
+  orderRefRaw        String
+  orderRefNormalized String
+  currency           String
+  amount             Float
+  fee                Float
+  netSettled         Float
+  type               String
+  status             String
+  processedAt        String
+
+  @@index([reconciliationId])
+  @@index([orderRefNormalized])
+  @@map("payments")
+}
+
+model Discrepancy {
+  id                String         @id @default(uuid())
+  reconciliationId  String
+  reconciliation    Reconciliation @relation(fields: [reconciliationId], references: [id], onDelete: Cascade)
+  category          String
+  severity          String         // CRITICAL, HIGH, MEDIUM, LOW
+  orderId           String?
+  transactionRef    String?
+  customerEmail     String?
+  orderAmount       Float?
+  paymentAmount     Float?
+  discrepancyAmount Float
+  orderStatus       String?
+  paymentStatus     String?
+  description       String
+  
+  // AI Root Cause Explanation (Cached from OpenAI gpt-4o-mini or fallback engine)
+  aiSummary         String?
+  likelyRootCause   String?
+  businessRisk      String?
+  recommendedAction String?
+  urgency           String?
+  aiAuditedAt       DateTime?
+
+  @@index([reconciliationId])
+  @@index([category])
+  @@index([severity])
+  @@map("discrepancies")
+}
