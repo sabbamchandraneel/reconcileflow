@@ -9,6 +9,7 @@ import { DiscrepancyTable } from '@/components/DiscrepancyTable';
 import { AiAuditModal } from '@/components/AiAuditModal';
 import { FileUploadModal } from '@/components/FileUploadModal';
 import { ExportReportButton } from '@/components/ExportReportButton';
+import { ProfileModal } from '@/components/ProfileModal';
 import { DiscrepancyItem } from '@/lib/reconciliation-engine';
 import { StoredReconciliation } from '@/lib/store';
 import { 
@@ -33,6 +34,7 @@ export default function DashboardPage() {
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [selectedDiscrepancy, setSelectedDiscrepancy] = useState<DiscrepancyItem | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
 
@@ -135,23 +137,24 @@ export default function DashboardPage() {
         user={user}
         onOpenUploadModal={() => setIsUploadModalOpen(true)}
         onRunDemoAudit={runDemoAudit}
+        onOpenProfileModal={() => setIsProfileModalOpen(true)}
         loadingDemo={loadingAudit}
       />
 
       {/* Main Dashboard Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-5 sm:space-y-6">
         {/* Executive Header & Audit Switcher Bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-slate-800/80 pb-4 sm:pb-5">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+              <h1 className="text-lg sm:text-xl md:text-2xl font-black text-white tracking-tight truncate">
                 {activeReconciliation?.title || 'Executive Revenue Reconciliation Audit'}
               </h1>
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 Audit Completed
               </span>
             </div>
-            <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 mt-1">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-slate-400 mt-1">
               <span className="flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 text-slate-500" />
                 {activeReconciliation
@@ -164,13 +167,13 @@ export default function DashboardPage() {
                     })
                   : 'Just now'}
               </span>
-              <span>•</span>
+              <span className="hidden sm:inline">•</span>
               <span className="flex items-center gap-1.5">
                 <Database className="w-3.5 h-3.5 text-slate-500" />
                 <span>Store Orders: </span>
                 <strong className="text-slate-200">{activeReconciliation?.summary.totalOrdersCount ?? 0} rows</strong>
               </span>
-              <span>•</span>
+              <span className="hidden sm:inline">•</span>
               <span className="flex items-center gap-1.5">
                 <Layers className="w-3.5 h-3.5 text-slate-500" />
                 <span>Payment Gateway: </span>
@@ -179,7 +182,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {/* Audit Run Switcher (if multiple runs exist) */}
             {reconciliations.length > 1 && (
               <select
@@ -188,7 +191,7 @@ export default function DashboardPage() {
                   const selected = reconciliations.find((r) => r.id === e.target.value);
                   if (selected) setActiveReconciliation(selected);
                 }}
-                className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 max-w-[200px] truncate"
               >
                 {reconciliations.map((rec) => (
                   <option key={rec.id} value={rec.id}>
@@ -210,7 +213,7 @@ export default function DashboardPage() {
             <p className="text-sm text-slate-300 font-medium">Running deterministic multi-pass reconciliation engine...</p>
           </div>
         ) : activeReconciliation ? (
-          <div className="space-y-6">
+          <div className="space-y-5 sm:space-y-6">
             {/* 1. Executive Headline KPI Metrics Cards */}
             <ExecutiveKpiCards summary={activeReconciliation.summary} />
 
@@ -232,6 +235,16 @@ export default function DashboardPage() {
           </div>
         ) : null}
       </main>
+
+      {/* Profile Management Modal */}
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        currentUser={user}
+        onProfileUpdated={(updated) => {
+          setUser((prev) => (prev ? { ...prev, ...updated } : updated));
+        }}
+      />
 
       {/* AI Root-Cause Auditor Modal */}
       <AiAuditModal

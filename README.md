@@ -117,7 +117,31 @@ Click **"Export Audit Report"** at the top of the dashboard to download:
 
 ---
 
+### Step 6 — Profile & Account Management
+
+Click on your **User Badge** in the top navigation bar at any time to open the **Profile Management Modal**:
+
+1. **Update Full Name / Display Title** — customize your name across the workspace.
+2. **Change Account Password** — securely update your login credentials with verification against your current password.
+3. **Inspect Account Role & Metadata** — view your assigned role (`Lead Financial Auditor`) and registration timestamp.
+4. **Permanent Persistence** — all profile and password changes are securely hashed with bcrypt and persisted directly in the PostgreSQL database.
+
+---
+
+## 📱 Mobile & Cross-Device Responsiveness
+
+ReconcileFlow is fully responsive and optimized for seamless use on **mobile phones, tablets, laptops, and ultra-wide displays**:
+
+- **Fluid Breakpoints** (`xs`, `sm`, `md`, `lg`, `xl`): Grid layouts dynamically collapse from 4-column executive cards on desktop to 2-column or single-card stacks on mobile.
+- **Adaptive Data Visualizations**: Recharts donut and bar charts automatically resize via `ResponsiveContainer` to maintain clarity and touch targets on narrow viewports.
+- **Horizontal Scrolling Ledger**: The Discrepancy drill-down table is wrapped in a smooth, touch-friendly horizontal scroll container, preventing table clipping on smartphones.
+- **Mobile Touch Modals**: The CSV file ingestion dropzones, AI Audit drawer, and Profile Management modal automatically scale with full vertical scroll accessibility and touch tap targets.
+- **Collapsible Navigation**: Header actions intelligently truncate text and adapt icons to preserve workspace space on mobile screens.
+
+---
+
 ## Local Setup
+
 
 ### Prerequisites
 
