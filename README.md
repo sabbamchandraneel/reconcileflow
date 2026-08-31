@@ -1,184 +1,408 @@
-# ReconcileFlow — Financial Reconciliation & Revenue Leakage Dashboard
+# ReconcileFlow
 
-> An enterprise-grade, deterministic financial reconciliation platform and AI auditor that ingests messy e-commerce order exports and payment processor ledgers to uncover silent revenue leakage, customer overcharges, and operational anomalies.
+> **A financial reconciliation platform that ingests messy e-commerce exports and uncovers exactly where revenue is leaking — with a deterministic matching engine and an AI audit layer on top.**
 
 ---
 
-## 1. Quick Start & Local Setup
+## Live Demo
+
+| | |
+|---|---|
+| **Live App** | *(add Vercel URL after deploy)* |
+| **GitHub** | https://github.com/sabbamchandraneel/reconcileflow |
+| **Test Login** | `auditor@example.com` / `AuditPass123!` |
+| **Sign Up** | Register any new account — multi-tenant isolation enforced |
+
+---
+
+## What This Does
+
+An online store has two systems that should agree with each other:
+
+- **`orders.csv`** — what the store thinks it sold (185 rows)
+- **`payments.csv`** — what the payment processor actually charged, refunded, or settled (187 rows)
+
+In theory, every completed order has exactly one matching payment for the right amount. In practice they disagree in many ways — and nobody knows where the money is going.
+
+**ReconcileFlow** ingests both files, runs a deterministic 6-pass reconciliation engine across them, and presents the results as an executive dashboard that a finance team can actually act on.
+
+---
+
+## How to Use the App (Step by Step)
+
+### Step 1 — Sign In
+
+Go to the live URL and you will land on the sign-in page.
+
+**Option A — 1-Click Evaluator Login (fastest)**
+Click the **"1-Click Evaluator Sign In"** button. This logs you in instantly as the pre-configured auditor account with the assignment dataset already loaded.
+
+**Option B — Create your own account**
+Click **"Create an account"**, enter any email and password, and register. You will start with a blank dashboard — your data is fully isolated from all other users.
+
+---
+
+### Step 2 — Load the Dataset
+
+Once logged in, click **"New Ingestion"** in the top navigation bar.
+
+A modal will appear with two options:
+
+**Option A — Load the Assignment Dataset (1-Click)**
+Click **"1-Click Load"** next to "Assignment Dataset — orders.csv & payments.csv". This instantly loads the original `orders.csv` (185 rows) and `payments.csv` (187 rows) files that were provided in this assignment and are committed to the repository root.
+
+**Option B — Upload your own CSV files**
+Drag and drop (or click to browse) your own orders and payments CSV files. The engine accepts any CSV that matches the column structure described below. You can also adjust the **Penny Rounding Tolerance** (default: $0.05) before running.
+
+Click **"Execute Reconciliation"** to run the engine.
+
+---
+
+### Step 3 — Read the Dashboard
+
+The dashboard loads in seconds and shows:
+
+**Top KPI Cards (headline figures)**
+
+| Card | What It Means |
+|---|---|
+| Money at Risk | Total dollars in CRITICAL + HIGH discrepancies requiring immediate action |
+| Value in Dispute | Total dollar variance across all flagged discrepancies |
+| Match Rate | Percentage of orders with a clean, perfectly matched payment |
+| Total Discrepancies | Number of individual anomaly items detected |
+| Total Orders | Count of order rows ingested |
+| Total Payments | Count of payment transaction rows ingested |
+
+**Charts**
+
+- **Donut chart** — shows how many discrepancies fall into each category. Click any segment to filter the table below.
+- **Bar chart** — shows the total dollar exposure per category, sorted largest-to-smallest.
+
+**Drill-Down Table**
+
+Every individual discrepancy is listed here with its Order ID, type, severity, order amount, payment amount, and variance. You can:
+
+- **Search** by Order ID, transaction reference, or customer email
+- **Filter by category** (e.g. show only Duplicate Charges)
+- **Filter by severity** (e.g. show only CRITICAL)
+- **Sort** by amount, severity, or Order ID
+- **Click "AI Audit"** on any row to get a structured root-cause explanation
+
+---
+
+### Step 4 — Run an AI Audit on a Discrepancy
+
+Click the **"AI Audit"** button on any row in the drill-down table.
+
+A panel slides open showing:
+
+1. **Summary** — one-sentence plain-English description of what happened
+2. **Likely Root Cause** — the technical or operational reason (e.g. missing webhook, idempotency key failure)
+3. **Business Risk** — specific financial or customer impact
+4. **Recommended Action** — concrete steps for the finance or engineering team
+
+The engine label at the bottom shows which source generated the explanation:
+- `openai-gpt-4o-mini` — live AI response (requires `OPENAI_API_KEY` in environment)
+- `deterministic-fallback` — built-in expert rule engine (works with no API key)
+
+Both produce the same structured output. The fallback engine ensures the app is fully functional without any external credentials.
+
+---
+
+### Step 5 — Export the Report
+
+Click **"Export Audit Report"** at the top of the dashboard to download:
+- **CSV format** — summary + all discrepancy rows in a spreadsheet-ready format
+- **JSON format** — full structured audit object for programmatic use
+
+---
+
+## Local Setup
 
 ### Prerequisites
-* **Node.js**: `v18.x` or higher (`v20+` recommended)
-* **npm**: `v9.x` or higher
 
-### Step-by-Step Installation
+- Node.js `v18.x` or higher (v20+ recommended)
+- npm `v9.x` or higher
 
-1. **Clone & Install Dependencies**:
-   ```bash
-   git clone <repository-url>
-   cd flow
-   npm install
-   ```
+### Installation
 
-2. **Configure Environment Variables**:
-   Copy the `.env.example` template:
-   ```bash
-   cp .env.example .env.local
-   ```
-   *(Note: The system includes a built-in offline fallback engine and in-memory multi-tenant store, so it runs completely out of the box even without external database or OpenAI keys).*
+**1. Clone the repository**
+```bash
+git clone https://github.com/sabbamchandraneel/reconcileflow.git
+cd reconcileflow
+```
 
-3. **Run Automated Test Suite**:
-   Verify the deterministic reconciliation engine against the benchmark dataset:
-   ```bash
-   npm test
-   ```
+**2. Install dependencies**
+```bash
+npm install
+```
 
-4. **Start Development Server**:
-   ```bash
-   npm run dev
-   ```
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
+**3. Configure environment variables**
+```bash
+cp .env.example .env.local
+```
+
+Open `.env.local` and fill in values as needed. The app works completely offline without a database or OpenAI key — an in-memory store and deterministic fallback engine handle everything automatically.
+
+**4. Run the automated test suite**
+
+Verifies the reconciliation engine detects all anomaly categories against the benchmark dataset:
+```bash
+npm test
+```
+
+Expected output:
+```
+🎉 ALL 10 ANOMALY CATEGORY VERIFICATIONS PASSED!
+```
+
+**5. Start the development server**
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 2. Evaluation Credentials & 1-Click Access
+## Environment Variables
 
-For instant evaluation, a pre-configured auditor account and 1-click login button are built into the sign-in page:
-
-| Role | Email | Password |
-| :--- | :--- | :--- |
-| **Lead Financial Auditor** | `auditor@example.com` | `AuditPass123!` |
-
-*You can also register any new account to verify strict multi-tenant data isolation.*
+| Variable | Required | Description |
+|---|---|---|
+| `DATABASE_URL` | Optional | PostgreSQL connection string. If omitted, the app uses an in-memory store. |
+| `JWT_SECRET` | Recommended | Secret key for signing JWT session tokens. A default is set for local development. |
+| `OPENAI_API_KEY` | Optional | OpenAI key for live AI audit responses. If omitted, the deterministic fallback engine runs instead. |
 
 ---
 
-## 3. System Architecture & Technical Design
+## Architecture Overview
 
 ```
-flow/
+reconcileflow/
 ├── app/
-│   ├── layout.tsx                     # Theme root & metadata
-│   ├── page.tsx                       # Landing page & session router
+│   ├── page.tsx                        # Landing page — redirects to login or dashboard
 │   ├── (auth)/
-│   │   ├── login/page.tsx             # Sign in + 1-Click Evaluator access
-│   │   └── register/page.tsx          # Multi-tenant account registration
+│   │   ├── login/page.tsx              # Sign-in page with 1-click evaluator access
+│   │   └── register/page.tsx           # Account registration
 │   ├── dashboard/
-│   │   └── page.tsx                   # Executive KPI cards, Recharts & Drill-down table
+│   │   └── page.tsx                    # Main dashboard — KPI cards, charts, drill-down table
 │   └── api/
-│       ├── auth/                      # Register, Login, Me, Logout (bcrypt + JWT)
-│       ├── reconcile/                 # Ingestion & deterministic engine execution
-│       ├── reconciliations/           # Historical audit run retrieval
-│       └── explain-discrepancy/       # Backend LLM auditor (gpt-4o-mini, temp: 0.1)
+│       ├── auth/register               # POST — create user account (bcrypt hashed)
+│       ├── auth/login                  # POST — verify credentials, issue JWT cookie
+│       ├── auth/me                     # GET  — validate current session
+│       ├── auth/logout                 # POST — clear session cookie
+│       ├── reconcile                   # POST — ingest CSVs and run reconciliation engine
+│       ├── reconciliations             # GET  — retrieve user's past audit runs
+│       └── explain-discrepancy         # POST — backend-only LLM audit call
 ├── components/
-│   ├── Navbar.tsx                     # Header, run switcher & demo dataset loader
-│   ├── ExecutiveKpiCards.tsx          # High-level financial KPIs (Money at Risk, Match Rate)
-│   ├── DiscrepancyCharts.tsx          # Recharts category donut & financial exposure bar charts
-│   ├── DiscrepancyTable.tsx           # Interactive, searchable, filterable drill-down table
-│   ├── AiAuditModal.tsx               # Structured AI root-cause audit drawer
-│   ├── FileUploadModal.tsx            # Custom CSV ingestion + tolerance configurator
-│   └── ExportReportButton.tsx         # CSV / JSON export of audited results
+│   ├── ExecutiveKpiCards.tsx           # 6 headline KPI cards
+│   ├── DiscrepancyCharts.tsx           # Donut chart + horizontal bar chart
+│   ├── DiscrepancyTable.tsx            # Filterable, searchable, sortable table
+│   ├── AiAuditModal.tsx                # AI root-cause explanation panel
+│   ├── FileUploadModal.tsx             # CSV upload + tolerance configurator
+│   ├── Navbar.tsx                      # Header, run switcher, demo loader
+│   └── ExportReportButton.tsx          # CSV / JSON export
 ├── lib/
-│   ├── reconciliation-engine.ts       # Pure deterministic reconciliation algorithms
-│   ├── auth.ts                        # JWT session tokens & bcrypt password hashing
-│   ├── db.ts                          # Prisma PostgreSQL client singleton
-│   ├── llm.ts                         # OpenAI client wrapper + deterministic fallback engine
-│   └── demo-data.ts                   # Benchmark dataset loader
+│   ├── reconciliation-engine.ts        # Deterministic 6-pass matching engine
+│   ├── auth.ts                         # JWT creation, verification, session helpers
+│   ├── llm.ts                          # OpenAI wrapper + deterministic fallback engine
+│   ├── db.ts                           # Prisma PostgreSQL client
+│   ├── store.ts                        # In-memory multi-tenant store (no-DB mode)
+│   └── demo-data.ts                    # Assignment CSV loader
 ├── prisma/
-│   └── schema.prisma                  # PostgreSQL schema with cascade relations
+│   └── schema.prisma                   # PostgreSQL schema with cascade relations
 ├── scripts/
-│   └── run-tests.mjs                  # Automated test runner verifying 10 anomaly types
-├── orders.csv                         # Store order system export (185 rows)
-├── payments.csv                       # Payment processor ledger (187 rows)
-└── PROJECT_BLUEPRINT.md               # Master engineering blueprint
+│   └── run-tests.mjs                   # Automated reconciliation engine test runner
+├── orders.csv                          # Original assignment dataset — 185 rows
+└── payments.csv                        # Original assignment dataset — 187 rows
 ```
+
+### Key Design Decisions
+
+**Multi-tenant isolation** — Every API route calls `getSessionUser(req)` first. All database queries and in-memory lookups are scoped to the authenticated user's ID. A user can never see another user's data.
+
+**Deterministic first, AI second** — The reconciliation engine is pure TypeScript math with no randomness. The same input always produces the same output. The AI layer only runs after the engine has already produced verified facts.
+
+**Resilient by design** — The app runs fully without a PostgreSQL database (in-memory fallback) and fully without an OpenAI key (deterministic fallback engine). This makes it evaluable in any environment.
 
 ---
 
-## 4. Deterministic Reconciliation Logic & Rules Defense
+## Reconciliation Logic — How It Works
 
-### Core Tenet
-> **LLMs must never perform financial matching.** All reconciliation, math, and status classifications are executed by a pure TypeScript deterministic engine. The LLM is strictly used as an analytical layer on top of verified mathematical facts.
+### The 6-Pass Engine
 
-### The 10 Anomaly Categories Identified
+The engine processes the two CSV files in a strict sequence:
 
-| # | Discrepancy Category | Detection & Matching Rule | Severity | Business / Financial Impact |
-| :- | :--- | :--- | :--- | :--- |
-| **1** | **Dirty Identifier Normalization** | Strips whitespace and normalizes case (`.trim().toUpperCase()`) on order IDs and payment order references (e.g. `" ord-1801 "`, `"ord-1802"`). | `LOW` | Eliminates false-negative mismatch rates caused by upstream formatting differences. |
-| **2** | **Duplicate Order Records** | Ingestion-stage frequency map identifies duplicate primary keys in the store export (`ORD-1004` appears 2x). | `HIGH` | Artificially inflates gross revenue and skews inventory demand forecasts. |
-| **3** | **Duplicate Payment Charges** | Groups payments by normalized order reference and detects multiple settled charges on the same order (`ORD-1501`, `ORD-1502`). | `CRITICAL` | Customer double-billed; immediate chargeback risk ($15-$25 dispute fee per txn). |
-| **4** | **Unpaid Orders (Orphan Orders)** | Store orders marked `completed` that have 0 matching records in the payment processor (`ORD-1201`, `ORD-1202`, `ORD-1203`, `ORD-1204`). | `CRITICAL` | **$740.00 uncollected revenue leakage.** Goods dispatched with zero captured funds. |
-| **5** | **Ghost Payments (Unlinked)** | Settled payment transactions with no corresponding store order ID (`ORD-1301`, `ORD-1302`, `ORD-1303`). | `HIGH` | **$320.00 unallocated liability.** Customer billed for unfulfilled or dropped order. |
-| **6** | **Material Pricing Discrepancies** | $\text{Variance} = \text{Payment Amount} - \text{Order Net}$. Flagged when $|\text{Variance}| > \$0.05$ (`ORD-1401` +$25, `ORD-1402` -$18.50, `ORD-1403` +$60). | `HIGH` | Store checkout discount dropped in payment intent or cart pricing calculation bug. |
-| **7** | **Penny Rounding Tolerances** | Flagged when $0.00 < |\text{Variance}| \le \$0.05$ (`ORD-1901` +$0.01, `ORD-1902` -$0.02, `ORD-1903` +$0.01). | `LOW` | Sub-cent tax/discount rounding noise. Grouped separately to prevent alerting fatigue. |
-| **8** | **Status & Settlement Mismatches** | • Cancelled order with settled charge (`ORD-1701`).<br>• Completed order with failed payment (`ORD-2001`).<br>• Completed order with pending payment (`ORD-2002`). | `CRITICAL` / `MEDIUM` | Goods delivered without settled funds, or money taken for cancelled goods. |
-| **9** | **Refund Inconsistencies** | • Order completed but full refund settled (`ORD-1703` $99).<br>• Order marked refunded but partial refund settled (`ORD-1702` $120 of $240). | `HIGH` / `MEDIUM` | Inaccurate financial reporting and unrecorded inventory returns. |
-| **10**| **Currency & Time Drifts** | • Multi-currency mismatches without FX tracking (`ORD-1601` USD vs EUR, `ORD-1602` EUR vs USD).<br>• Settlement latency > 14 days (`ORD-2101` 30-day gap). | `HIGH` / `LOW` | FX margin erosion and card authorization expiration risks. |
+**Pass 1 — Normalization**
+All order IDs and payment order references are trimmed of whitespace and uppercased (e.g. `" ord-1801 "` → `"ORD-1801"`). All monetary values are parsed and rounded to 2 decimal places using `Math.round((n + ε) * 100) / 100` to prevent IEEE-754 floating point drift.
+
+**Pass 2 — Duplicate Order Detection**
+A frequency map is built over normalized order IDs. Any order ID appearing more than once in the store export is flagged as `DUPLICATE_ORDER_RECORD`.
+
+**Pass 3 — Payment Grouping**
+All payment transactions are grouped by their normalized order reference into a lookup map for O(1) access during matching.
+
+**Pass 4 — Order-to-Payment Matching (anomaly detection)**
+For every unique order, the engine retrieves all related payments and checks:
+- Zero payments → `UNPAID_ORDER` (only if status is not `cancelled`)
+- Multiple settled charges → `DUPLICATE_PAYMENT_CHARGE`
+- Order cancelled but charge settled → `CANCELLED_ORDER_CHARGED`
+- Order completed but payment failed → `FAILED_PAYMENT_ORDER_COMPLETED`
+- Order completed but payment pending → `UNSETTLED_PENDING_PAYMENT`
+- Single charge with variance > $0.05 → `MATERIAL_OVERCHARGE` or `MATERIAL_UNDERCHARGE`
+- Single charge with variance between $0.00 and $0.05 → `PENNY_ROUNDING_VARIANCE`
+- Refund settled on completed order → `UNRECORDED_FULL_REFUND`
+- Partial refund settled on refunded order → `PARTIAL_REFUND_RECORDED`
+- Order and payment currencies differ → `CURRENCY_MISMATCH`
+- Settlement date more than 14 days after order date → `SETTLEMENT_TIME_DRIFT`
+
+**Pass 5 — Ghost Payment Detection**
+Any payment transaction whose order reference does not appear in the order export at all is flagged as `UNLINKED_GHOST_PAYMENT`.
+
+**Pass 6 — Aggregate Metrics**
+The engine computes all KPI values: total order value, total settled charges, total settled refunds, gateway fees paid, clean match count, match rate percentage, total value in dispute, and total money at risk.
+
+---
+
+### The 14 Anomaly Categories
+
+| # | Category | Severity | What It Means |
+|---|---|---|---|
+| 1 | Unpaid Order | CRITICAL | Order marked completed in store, zero payments in gateway. Uncollected revenue. |
+| 2 | Ghost Payment | HIGH | Payment settled with no matching store order. Unallocated liability. |
+| 3 | Duplicate Charge | CRITICAL | Same order charged multiple times. Customer double-billed. |
+| 4 | Duplicate Order Record | HIGH | Same order ID appears twice in store export. Inflates revenue figures. |
+| 5 | Material Overcharge | HIGH | Payment exceeds order net by more than $0.05. Customer overcharged. |
+| 6 | Material Undercharge | HIGH | Payment is less than order net by more than $0.05. Revenue shortfall. |
+| 7 | Penny Rounding Variance | LOW | Variance between $0.00 and $0.05. Mathematical rounding noise, not a real error. |
+| 8 | Cancelled Order Charged | CRITICAL | Order cancelled in store but payment gateway settled funds. Chargeback risk. |
+| 9 | Failed Payment — Order Completed | CRITICAL | Store fulfilled order but payment transaction failed. Goods shipped without funds. |
+| 10 | Pending Unsettled Payment | MEDIUM | Order completed but payment still pending in gateway. |
+| 11 | Unrecorded Full Refund | HIGH | Store says completed but gateway processed a full refund. Missing webhook. |
+| 12 | Partial Refund Recorded | MEDIUM | Store says fully refunded but gateway only partially refunded. |
+| 13 | Currency Mismatch | HIGH | Order and payment in different currencies with no FX conversion. |
+| 14 | Settlement Time Drift | LOW | More than 14 days between order date and payment settlement. Authorization expiry risk. |
+
+---
 
 ### Defense of the $0.05 Tolerance Threshold
-Variances of $\pm\$0.01$ to $\$0.02$ routinely emerge from differing rounding strategies (e.g. Round Half-Up on storefront tax lines vs Round Half-Even in payment gateways). 
-* Setting the threshold at **$0.05** filters out 100% of mathematical rounding noise into a low-severity category.
-* Legitimate pricing bugs in the dataset range from **$18.50 to $60.00**, making the boundary completely distinct and robust.
+
+Sub-cent differences ($0.01–$0.02) arise naturally when two systems round the same number differently:
+
+- Round Half-Up: $135.375 → $135.38
+- Round Half-Even (Banker's rounding): $135.375 → $135.38
+
+Setting the boundary at **$0.05** captures 100% of this mathematical noise as low-severity without alerting on it. Every legitimate pricing error in the actual dataset ($18.50, $25.00, $60.00) is far outside this boundary, making the separation clean and unambiguous.
 
 ---
 
-## 5. What Was Found in the Data: Ground Truth Analysis
+## What Was Found in the Data
 
 Analysis of `orders.csv` (185 rows) and `payments.csv` (187 rows) revealed:
 
-* **Total Orders Volume**: 185 records totaling **$38,420.10**
-* **Total Payment Ledger**: 187 transactions totaling **$39,120.40**
-* **Clean Matched Orders**: 160 orders (**87.4% Match Rate**)
-* **Total Discrepancies**: 25 distinct anomaly items
-* **Total Value in Dispute**: **$2,488.24**
-* **Total Money at Risk (Actionable Leakage)**: **$1,732.08**
+- **Total Orders Value:** $38,420.10 across 185 records
+- **Total Payments Ledger:** $39,120.40 across 187 transactions
+- **Clean Matched Orders:** ~160 orders (87.4% match rate)
+- **Total Discrepancies:** 25+ individual anomaly items
+- **Total Value in Dispute:** ~$2,488
+- **Total Money at Risk (actionable leakage):** ~$1,732
 
-### Major Leakage Sources
-1. **Uncollected Revenue (Unpaid Orders)**: $740.00 across 4 orders.
-2. **Duplicate Customer Charges**: $248.58 double-billed across 2 orders.
-3. **Material Pricing Errors**: $103.50 across 3 orders ($85 overcharged, $18.50 undercharged).
-4. **Cancelled Order Retained Charge**: $175.00 charged on cancelled order.
-5. **Failed Payment Fulfillment**: $310.00 goods shipped on failed transaction.
-6. **Ghost Payment Captures**: $320.00 across 3 unlinked transactions.
+### Where the Money Is Going
+
+| Problem | Orders | Dollar Impact | Business Meaning |
+|---|---|---|---|
+| **Unpaid Orders** | ORD-1201, 1202, 1203, 1204 | **$740.00 lost** | Goods dispatched, zero funds collected |
+| **Ghost Payments** | ORD-1301, 1302, 1303 | **$320.00 unallocated** | Money taken, no matching order to apply it to |
+| **Failed Payment — Order Completed** | ORD-2001 | **$310.00 at risk** | Order fulfilled on a failed transaction |
+| **Duplicate Charges** | ORD-1501, 1502 | **$248.58 double-billed** | Customers charged twice — immediate chargeback risk |
+| **Cancelled Order Charged** | ORD-1701 | **$175.00 wrongly held** | Customer cancelled but money was taken |
+| **Material Pricing Errors** | ORD-1401, 1402, 1403 | **$103.50 variance** | $85 overcharged, $18.50 undercharged across 3 orders |
+| **Refund Inconsistencies** | ORD-1702, 1703 | Reporting gap | Partial vs full refund discrepancies |
+| **Currency Mismatches** | ORD-1601, 1602 | FX exposure | USD/EUR orders without conversion tracking |
+| **Rounding Noise** | ORD-1901, 1902, 1903 | $0.01–$0.02 each | Low-severity, expected, no action required |
+| **Settlement Drift** | ORD-2101 | 30-day gap | Authorization expiry risk on delayed settlements |
 
 ---
 
-## 6. LLM Integration & Prompting Strategy
+## LLM Integration
 
-### Configuration & Architecture
-* **Model**: OpenAI `gpt-4o-mini`
-* **Temperature**: `0.1`
-* **Output Format**: Structured JSON mode (`response_format: { type: "json_object" }`)
+### Architecture
+
+The LLM is called **from the backend only**. The browser never receives or transmits the API key — it only sends the discrepancy facts (amounts, statuses, category) to `/api/explain-discrepancy`, which runs server-side and returns the structured explanation.
+
+### Model and Parameters
+
+| Setting | Value | Reason |
+|---|---|---|
+| Model | `gpt-4o-mini` | Strong reasoning at low cost and latency |
+| Temperature | `0.1` | Financial audit reasoning must be grounded and deterministic, not creative |
+| Response format | `json_object` | Enforces structured output schema, eliminates parse errors |
 
 ### Why Temperature 0.1?
-1. **Zero Hallucination**: Financial audit root-cause deductions must be grounded strictly in the provided arithmetic deltas.
-2. **Deterministic Output**: Ensures consistent, repeatable recommendations across repeated evaluations.
-3. **JSON Schema Guarantee**: Eliminates syntax errors in parsed response keys.
 
-### JSON Output Schema
+High temperature makes the model explore diverse, creative responses. For a financial audit tool, that is exactly what you do not want — root-cause analysis must be grounded in the arithmetic facts provided, not speculative. At 0.1 the model is highly consistent, factual, and produces identical or near-identical structured output across repeated calls on the same input.
+
+### Output Schema
+
 ```json
 {
-  "summary": "1-sentence executive summary of what occurred in plain financial English",
-  "likelyRootCause": "Specific technical/operational cause (e.g. missing webhook, missing idempotency key)",
-  "businessRisk": "Specific financial loss, chargeback risk, or customer friction impact",
-  "recommendedAction": "Concrete, step-by-step resolution for finance and engineering teams",
+  "summary": "One-sentence plain-English description of what occurred",
+  "likelyRootCause": "Specific technical or operational cause",
+  "businessRisk": "Financial loss, chargeback risk, or customer friction impact",
+  "recommendedAction": "Concrete step-by-step resolution for finance and engineering",
   "urgency": "CRITICAL | HIGH | MEDIUM | LOW"
 }
 ```
 
-### Resilient Fallback Engine
-If the OpenAI API key is not supplied or encounters rate limits, the backend automatically invokes an intelligent, domain-specific deterministic rule engine. Every discrepancy category receives tailored technical causes, financial risk analyses, and actionable remediation steps without breaking the user experience.
+### Handling Bad Responses
+
+If the OpenAI API returns malformed JSON, an unexpected schema, or an invalid urgency value, the code catches the error and falls back to the deterministic rule engine. This fallback is also used when no API key is configured. Every discrepancy category has a hand-written expert explanation covering root cause, business risk, and recommended action — so the modal always works and always returns meaningful output.
 
 ---
 
-## 7. Future Improvements & Next Steps
+## What I Would Build Next
 
-1. **Automated Webhook Ingestion Pipeline**: Real-time Kafka / SQS ingestion of payment gateway webhooks to prevent batch sync lag.
-2. **Dynamic Multi-Currency FX Engine**: Live integration with ECB or OpenExchangeRates API to perform real-time FX conversions.
-3. **Automated Remediation Actions**: 1-click "Issue Refund" and "Trigger Customer Recovery Email" buttons integrated directly with Stripe/Adyen APIs.
-4. **Machine Learning Anomaly Clustering**: Auto-clustering recurring error patterns by customer email domain or payment method.
+1. **Real-time webhook ingestion** — Stripe and Adyen both emit events on every payment state change. An event-driven pipeline (SQS or Kafka) would replace batch CSV uploads and catch discrepancies within seconds rather than at end-of-day.
+
+2. **Live FX conversion engine** — Integrate the ECB or OpenExchangeRates API to convert multi-currency payments to a base currency before comparing amounts. Currently currency mismatches are flagged but not quantified in base currency terms.
+
+3. **1-click remediation actions** — Add "Issue Refund" and "Void Charge" buttons that call the Stripe/Adyen API directly from the discrepancy row, closing the loop between detection and resolution in one step.
+
+4. **Anomaly clustering with ML** — Group recurring error patterns by payment method, customer email domain, or time-of-day to surface systemic causes rather than individual incidents.
 
 ---
 
-## 8. AI Tools Disclosure
+## AI Tools Disclosure
 
-This project was built with the assistance of agentic AI coding tools (Claude Code & Antigravity). All architectural decisions, deterministic engine rules, database schemas, and data anomalies were verified, tested, and implemented end-to-end.
+This project was built with the assistance of agentic AI coding tools. All architectural decisions, reconciliation rules, anomaly classifications, tolerance thresholds, and data findings were personally verified, understood, and deliberately chosen. The AI tooling accelerated implementation; the engineering judgment behind every decision is mine to defend.
+
+---
+
+## CSV Column Reference
+
+### orders.csv
+
+| Column | Type | Description |
+|---|---|---|
+| `order_id` | string | Unique order identifier (may contain whitespace — normalized automatically) |
+| `order_date` | datetime | Order creation timestamp |
+| `customer_email` | string | Customer email address |
+| `currency` | string | Order currency code (e.g. USD, EUR) |
+| `gross_amount` | decimal | Pre-discount order total |
+| `discount` | decimal | Discount applied |
+| `net_amount` | decimal | Amount customer should be charged (gross − discount) |
+| `status` | string | `completed`, `cancelled`, or `refunded` |
+
+### payments.csv
+
+| Column | Type | Description |
+|---|---|---|
+| `transaction_ref` | string | Unique payment gateway transaction ID |
+| `processed_at` | datetime | Transaction processing timestamp (DD/MM/YYYY HH:mm or ISO format) |
+| `order_reference` | string | Order ID as recorded by payment gateway (may differ in casing/whitespace) |
+| `currency` | string | Payment currency code |
+| `amount` | decimal | Gross amount charged or refunded |
+| `fee` | decimal | Gateway processing fee |
+| `net_settled` | decimal | Amount settled after fees |
+| `type` | string | `charge` or `refund` |
+| `status` | string | `settled`, `pending`, or `failed` |
