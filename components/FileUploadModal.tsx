@@ -166,10 +166,10 @@ export const FileUploadModal: React.FC<FileUploadModalProps> = ({
             <div className="space-y-0.5">
               <div className="font-semibold text-slate-100 flex items-center gap-1.5">
                 <Database className="w-4 h-4 text-indigo-400" />
-                <span>Included Store Audit Dataset</span>
+                <span>Assignment Dataset — <span className="text-indigo-300">orders.csv & payments.csv</span></span>
               </div>
               <p className="text-slate-400 text-[11px]">
-                Instant 1-click audit with the benchmark 185 orders & 187 payments CSV files.
+                The original <code className="text-indigo-300 bg-indigo-950/50 px-1 rounded">orders.csv</code> (185 rows) &amp; <code className="text-indigo-300 bg-indigo-950/50 px-1 rounded">payments.csv</code> (187 rows) provided in the assignment — committed to the repo root.
               </p>
             </div>
 
