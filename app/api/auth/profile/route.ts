@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSessionUser, hashPassword, verifyPassword } from '@/lib/auth';
+import { getSessionUser, hashPassword, verifyPassword, createAuthToken, AUTH_COOKIE_NAME } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { inMemoryStore } from '@/lib/store';
 
 export async function GET(req: NextRequest) {
   try {
@@ -51,11 +52,34 @@ export async function PUT(req: NextRequest) {
     const { name, currentPassword, newPassword } = await req.json();
 
     if (!process.env.DATABASE_URL) {
-      return NextResponse.json({
+      const memUser = inMemoryStore.users.get(session.email);
+      if (memUser) {
+        memUser.name = name || memUser.name;
+      }
+      
+      const token = await createAuthToken({
+        userId: session.userId,
+        email: session.email,
+        name: name || session.name,
+      });
+
+      const response = NextResponse.json({
         success: true,
-        message: 'Profile updated in session memory mode',
+        message: 'Profile updated successfully',
         user: { id: session.userId, email: session.email, name: name || session.name },
       });
+
+      response.cookies.set({
+        name: AUTH_COOKIE_NAME,
+        value: token,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7,
+        path: '/',
+      });
+
+      return response;
     }
 
     const dbUser = await prisma.user.findUnique({
@@ -105,13 +129,33 @@ export async function PUT(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({
+    // Re-sign fresh JWT session token so claims match
+    const token = await createAuthToken({
+      userId: updatedUser.id,
+      email: updatedUser.email,
+      name: updatedUser.name || undefined,
+    });
+
+    const response = NextResponse.json({
       success: true,
       message: 'Profile updated successfully',
       user: updatedUser,
     });
+
+    response.cookies.set({
+      name: AUTH_COOKIE_NAME,
+      value: token,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+    });
+
+    return response;
   } catch (error) {
     console.error('Profile PUT error:', error);
     return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
   }
 }
+
