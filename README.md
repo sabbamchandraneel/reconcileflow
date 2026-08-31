@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **Live App** | *(add Vercel URL after deploy)* |
+| **Live App** | https://flow-ten-alpha.vercel.app |
 | **GitHub** | https://github.com/sabbamchandraneel/reconcileflow |
 | **Test Login** | `auditor@example.com` / `AuditPass123!` |
 | **Sign Up** | Register any new account — multi-tenant isolation enforced |
